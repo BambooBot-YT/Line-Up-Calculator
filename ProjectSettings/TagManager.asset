@@ -6,14 +6,16 @@ TagManager:
   tags:
   - World
   - spike
+  - Molly
+  - Target
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - MollyLayer
+  - Ground
   - Water
   - UI
-  - 
+  - Particles
   - 
   - 
   - 
