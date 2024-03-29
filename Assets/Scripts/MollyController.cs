@@ -28,10 +28,37 @@ public class MollyController : MonoBehaviour
     public float trailLengthInSeconds = 2f;
     public float targetRadius = 3f;
 
+    public int solverPointsCount = 10000;
+    private int _solverPointCount;
+
     [ReadOnly]
     public float simulatedTimeElaspedInSeconds;
     [ReadOnly]
     public float simulationCount;
+
+    public void OnValidate()
+    {
+        if (solverPointsCount != _solverPointCount)
+        {
+            _solverPointCount = solverPointsCount;
+            vectors = GenerateUpperHemispherePoints(_solverPointCount);
+        }
+    }
+    private void Start()
+    {
+        Debug.Log("Starting solver");
+        vectors = GenerateUpperHemispherePoints(_solverPointCount);
+        Debug.Log("Solver ready, press E");
+    }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            BeginSolver();
+        }
+    }
+
 
     public bool DEBUG = true;
     private IEnumerator CalculatePath(Vector3 vector, bool trace=false)
@@ -99,21 +126,6 @@ public class MollyController : MonoBehaviour
             else if (step % 100 == 0) yield return null;
         }
         yield return null;
-    }
-
-    private void Start()
-    {
-        Debug.Log("Starting solver");
-        vectors = GenerateUpperHemispherePoints(50000);
-        Debug.Log("Solver ready, press E");
-    }
-
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.E))
-        {
-            BeginSolver();
-        }
     }
 
     private void CreateDebugSphere(Vector3 position, Color color)
