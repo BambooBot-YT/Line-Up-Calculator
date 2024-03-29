@@ -22,7 +22,6 @@ public class Molly : MonoBehaviour
 
     public BigBrainBrimiBoyBigBrain FatherBigBrainBrimiBoyBigBrain;
 
-    public Spike spikeBrain;
     private GameObject spike;
 
     public bool thisIsTheOne = false;
@@ -35,19 +34,12 @@ public class Molly : MonoBehaviour
     private void Start()
     {
         FatherBigBrainBrimiBoyBigBrain = GameObject.FindGameObjectWithTag("Player").GetComponent<BigBrainBrimiBoyBigBrain>();
-        spikeBrain = GameObject.FindGameObjectWithTag("spike").GetComponent<Spike>();
-
-        manufactureTag = FatherBigBrainBrimiBoyBigBrain.manufactureTag;
-        launchAngle = FatherBigBrainBrimiBoyBigBrain.lastMollyVertical;
-        horizontalAngle = FatherBigBrainBrimiBoyBigBrain.lastMollyHorizontal;
-        FatherBigBrainBrimiBoyBigBrain.nextMolly();
-
-        launchAngle = launchAngle - 270;
+        
         rb = GetComponent<Rigidbody>();
 
         rb.constraints = RigidbodyConstraints.FreezeRotation;
         // Calculate the initial velocity based on the launch angle and horizontal angle
-        Vector3 launchDirection = Quaternion.Euler(launchAngle, horizontalAngle, 0f) * Vector3.forward;
+        Vector3 launchDirection = Quaternion.Euler(0f, 0f, 0f) * Vector3.forward;
         Vector3 initialVelocity = launchDirection.normalized * throwForceMagnitude;
         rb.velocity = initialVelocity;
         spike = GameObject.FindGameObjectWithTag("spike");
@@ -55,15 +47,9 @@ public class Molly : MonoBehaviour
 
     private void Update()
     {
-        if (spikeBrain.omaeWaMouShindeiru == true)
-        {
-            if (thisIsTheOne == false)
-            {
-                Destroy(gameObject);
-            }
-        }
         rb.AddForce(Vector3.down * gravity * Time.deltaTime);
     }
+
 
     private void OnCollisionEnter(Collision collision)
     {
@@ -83,7 +69,6 @@ public class Molly : MonoBehaviour
 
             if (Vector3.Distance(transform.position, spike.transform.position) < 2)
             {
-                spikeBrain.MissionNotFailedWellGetEmThisTime((int)launchAngle, (int)horizontalAngle, type);
                 thisIsTheOne = true;
             }
             else

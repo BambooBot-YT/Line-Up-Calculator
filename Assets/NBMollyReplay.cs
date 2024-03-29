@@ -16,7 +16,6 @@ public class NBMollyReplay : MonoBehaviour
     public float horizontalAngle = 0f; // Horizontal angle in degrees
 
     public Rigidbody rb;
-    public Spike data;
     private GameObject spike;
 
     public bool thisIsTheOne = false;
@@ -30,11 +29,6 @@ public class NBMollyReplay : MonoBehaviour
 
     private void Start()
     {
-        data = GameObject.FindGameObjectWithTag("spike").GetComponent<Spike>();
-
-        launchAngle = data.vertical;
-        horizontalAngle = data.horizontal;
-
         launchAngle = launchAngle - 270;
         rb = GetComponent<Rigidbody>();
 

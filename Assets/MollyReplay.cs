@@ -20,17 +20,10 @@ public class MollyReplay : MonoBehaviour
 
     private Rigidbody rb;
 
-    public Spike data;
-
     public GameObject trail;
 
     private void Start()
     {
-        data = GameObject.FindGameObjectWithTag("spike").GetComponent<Spike>();
-
-        launchAngle = data.vertical;
-        horizontalAngle = data.horizontal;
-
         launchAngle = launchAngle - 270;
         rb = GetComponent<Rigidbody>();
 
