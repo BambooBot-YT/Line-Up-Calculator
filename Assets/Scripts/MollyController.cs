@@ -6,34 +6,55 @@ using UnityEngine;
 public class MollyController : MonoBehaviour
 {
     private Vector3[] vectors;
+    private GameObject debugObjects;
+    private int _solverPointCount;
 
-    private GameObject debugObjects;   
-
+    [Header("Debug Settings")]
+    public bool traceAllProjctiles = false;
+    public bool showDebugSpheres = true;
+    public float simulationDisplaySpeed = 30f;
     public GameObject debugSphere;
+    public KeyCode simulationKey = KeyCode.E;
+
+    [Header("Projectile Settings")]
     public Transform origin;
     public Transform target;
-
     public float throwForce = 1f;
     public float gravity = 9.81f;
     public float dampening = 0.4f;
     public int targetBounces = 4;
-    //public float drag = 0.1f;
-    
+    public float targetRadius = 3f;
 
-    //public float batchSize = 100;
+    [Header("Performance Settings")]
+    public int solverPointsCount = 10000;
     public float maxStepCount = 1000;
     public float stepSize = 0.01f;
 
-    public float SimulationSpeed = 1f;
+    [Header("Simulation Information")]
     public float trailLengthInSeconds = 2f;
-    public float targetRadius = 3f;
+    public float simulatedTime;
 
-    [ReadOnly]
-    public float simulatedTimeElaspedInSeconds;
-    [ReadOnly]
-    public float simulationCount;
+    public void OnValidate()
+    {
+        if (solverPointsCount != _solverPointCount)
+        {
+            _solverPointCount = solverPointsCount;
+            vectors = GenerateUpperHemispherePoints(_solverPointCount); // Regenerate points whenever editor value changes
+        }
+    }
+    private void Start()
+    {
+        vectors = GenerateUpperHemispherePoints(_solverPointCount);
+    }
 
-    public bool DEBUG = true;
+    private void Update()
+    {
+        if (Input.GetKeyDown(simulationKey))
+        {
+            BeginSolver();
+        }
+    }
+
     private IEnumerator CalculatePath(Vector3 vector, bool trace=false)
     {
         Vector3 lastPosition;
@@ -48,8 +69,9 @@ public class MollyController : MonoBehaviour
             position += velocity * stepSize;
             velocity += gravity * stepSize * Vector3.down;
             time += stepSize;
-            simulatedTimeElaspedInSeconds += stepSize;
+            simulatedTime += stepSize;
 
+            // TODO: define bound to kill simulations.
             //if (position.y < 0.1f || position.x < -10 || position.x > 10 || position.z < -10 || position.z > 10)
             //{
             //    Debug.Log("Hit bounds at " + time + " seconds");
@@ -63,10 +85,10 @@ public class MollyController : MonoBehaviour
                 if (hit.collider.CompareTag("Target"))
                 {
                     Debug.Log("Hit target at " + time + " seconds");
-                    if (DEBUG) CreateDebugSphere(position, Color.green);
+                    if (showDebugSpheres) CreateDebugSphere(position, Color.green);
 
-                    if (DEBUG && !trace) StartCoroutine(CalculatePath(vector, true));
-                    if (DEBUG && trace)
+                    if (showDebugSpheres && !trace) StartCoroutine(CalculatePath(vector, true));
+                    if (showDebugSpheres && trace)
                     {
                         Debug.DrawLine(lastPosition, position, Color.blue, 1000);
                     }
@@ -75,13 +97,13 @@ public class MollyController : MonoBehaviour
 
                     Debug.Log("Hit wall at " + time + " seconds");
                     velocity = Vector3.Reflect(velocity, hit.normal);
-                    if (DEBUG && trace) CreateDebugSphere(position, Color.blue);
+                    if (showDebugSpheres && trace) CreateDebugSphere(position, Color.blue);
                     if (bounces++ == targetBounces)
                     {
                         if (Vector3.Distance(position, target.position) < targetRadius)
                         {
                             Debug.Log("Hit target at " + time + " seconds");
-                            if (DEBUG) CreateDebugSphere(position, Color.green);
+                            if (showDebugSpheres) CreateDebugSphere(position, Color.green);
                         }
                         break;
                     };
@@ -90,30 +112,15 @@ public class MollyController : MonoBehaviour
                 }
             }
 
-            if (DEBUG && trace)
+            if (showDebugSpheres && trace)
             {
                 Debug.DrawLine(lastPosition, position, Color.blue, 500);
             }
 
-            if (trace) yield return new WaitForSeconds(1f / SimulationSpeed);
+            if (trace) yield return new WaitForSeconds(1f / simulationDisplaySpeed);
             else if (step % 100 == 0) yield return null;
         }
         yield return null;
-    }
-
-    private void Start()
-    {
-        Debug.Log("Starting solver");
-        vectors = GenerateUpperHemispherePoints(50000);
-        Debug.Log("Solver ready, press E");
-    }
-
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.E))
-        {
-            BeginSolver();
-        }
     }
 
     private void CreateDebugSphere(Vector3 position, Color color)
@@ -129,7 +136,7 @@ public class MollyController : MonoBehaviour
 
     public void BeginSolver()
     {
-        if (DEBUG)
+        if (showDebugSpheres)
         {
             if (debugObjects != null)
                 Destroy(debugObjects);
@@ -139,7 +146,7 @@ public class MollyController : MonoBehaviour
         }
         for (int i = 0; i < vectors.Length; i++)
         {
-            StartCoroutine(CalculatePath(vectors[i]));
+            StartCoroutine(CalculatePath(vectors[i], traceAllProjctiles));
         }
     }
 
