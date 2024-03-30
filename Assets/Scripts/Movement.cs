@@ -39,7 +39,7 @@ public class Movement : MonoBehaviour
                 playerVelocity.y = 0f;
             }
 
-            Vector3 move = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
+            Vector3 move = new(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
 
             move = head.TransformDirection(move);
             move.y = 0;
