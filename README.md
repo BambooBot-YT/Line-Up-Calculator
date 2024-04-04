@@ -16,7 +16,7 @@
 ![Contributors](https://img.shields.io/github/contributors/BambooBot-YT/Line-Up-Calculator?color=dark-green) ![Issues](https://img.shields.io/github/issues/BambooBot-YT/Line-Up-Calculator) ![License](https://img.shields.io/github/license/BambooBot-YT/Line-Up-Calculator) 
 
 # Installing
-Looking to install? Want to contribute or just looking to try it out? Either way head over to th [QUICKSTART GUIDE](https://github.com/BambooBot-YT/Line-Up-Calculator/blob/stable/QUICKSTART.md)
+Looking to install? Want to contribute or just looking to try it out? Either way head over to the [QUICKSTART GUIDE](https://github.com/BambooBot-YT/Line-Up-Calculator/blob/stable/QUICKSTART.md)
 
 ## Contributors
 
