@@ -27,14 +27,14 @@ If you haven’t already, download and install Unity Hub.
 
 Once downloaded, open Unity Hub and go to the installs tab
 now click the blue `Install Editor` button and select your prefered version
-to insure everything functions as intended use `2022.3.22f1`  
+to ensure everything functions as intended use `2022.3.22f1`  
 this should be in the official releases tab under LTS
 you may now hit the blue `Continue` button no other settings are required
 
 2. **Open the Project**
 
 Now that you have unity installed and setup go to the projects tab
-click the grey `Open` button and navagnait to the path where you installed or cloned the repo
+click the grey `Open` button and navigate to the path where you installed or cloned the repo
 now you should be good to open up the project and start exploring have fun!
 
 ---
@@ -75,7 +75,7 @@ Any contributions you make are greatly appreciated. There are many ways to contr
 submitting bug reports and feature requests or writing code which can be incorporated into the calculator itself.
 
 > [!NOTE]
-> Before implementing a new feature or a bug fix, please open an [issue](https://github.com/BambooBot-YT/Line-Up-Calculator/issues) first. This will allow us to discuss the specficiation and the best way to implement it.
+> Before implementing a new feature or a bug fix, please open an [issue](https://github.com/BambooBot-YT/Line-Up-Calculator/issues) first. This will allow us to discuss the specficiation, and the best way to implement it.
 
 ## Get started
 
@@ -92,16 +92,27 @@ submitting bug reports and feature requests or writing code which can be incorpo
     git commit -am "Added new molly type"
     ```
 
-5. Once you are happy with your changes, push to a new branch on your forked repository e.g. `featurename-username` with `featurename` and `username` replaced.
+4. Once you are happy with your changes, push to a new branch on your forked repository (e.g. `featurename-username` with `featurename` and `username` replaced).
     ```sh
-    git branch -M featurename-username
+    git branch -m featurename-username
     git push origin featurename-username    
     ```
+> [!WARNING]
+> Never directly attempt to merge into `stable` it will be denied only core team members are allowed to update `stable`
 
-6. Make a [pull request](https://stackoverflow.com/questions/14680711/how-to-do-a-github-pull-request) merging your new branch back into the dev branch of the main repository
+5. After pushing your changes to a new branch on your forked repository (e.g., `featurename-username`), you need to create a pull request to merge your changes back into the `dev` branch of the main repository. A pull request allows others to review your code and discuss any necessary changes before merging it into the main codebase.
 
-7. ???
-9. Profit
+To create a pull request:
+  - Go to the GitHub page of your forked repository.
+  - Switch to the branch containing your changes.
+  - Click on the "Pull Request" button or navigate to the "Pull Requests" tab and click "New Pull Request."
+  - Choose the base branch (usually `dev`) and the branch containing your changes.
+  - Provide a clear title and description for your pull request, explaining the purpose of your changes.
+  - Review the changes and ensure all necessary files are included.
+  - Submit the pull request and wait for feedback from a core team member.
+
+6. ???
+7. Profit
     
 ---
 
