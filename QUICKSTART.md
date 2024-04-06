@@ -43,7 +43,7 @@ now you should be good to open up the project and start exploring have fun!
 
 1. **Pick a version** 
 
-   - [stable](https://github.com/BambooBot-YT/Line-Up-Calculator/tree/stable) 
+   - [stable](https://github.com/BambooBot-YT/Line-Up-Calculator/tree/stable) (Reccomended)
    - [dev](https://github.com/BambooBot-YT/Line-Up-Calculator/tree/dev)
 > [!WARNING]
 > Using the dev branch might lead to `Errors, Excessive Crashing and / or General Instability` and should only be used if you wish to contribute.
