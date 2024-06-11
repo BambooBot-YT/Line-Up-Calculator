@@ -1,39 +1,104 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Collections;
 using UnityEngine;
 
+/// <summary>
+/// Controls the behavior of Molly projectiles in the game.
+/// </summary>
 public class MollyController : MonoBehaviour
 {
+    // Private fields
+    /// <summary>
+    /// An array of vectors representing points on the upper hemisphere.
+    /// </summary>
     private Vector3[] vectors;
-    private GameObject debugObjects;
+
+    /// <summary>
+    /// A GameObject to organize debug objects in the scene hierarchy.
+    /// </summary>
+    private GameObject debugObjectsFolder;
+
+    /// <summary>
+    /// The count of solver points used in the simulation.
+    /// </summary>
     private int _solverPointCount;
 
+    // Public fields
     [Header("Debug Settings")]
+    /// <summary>
+    /// Indicates whether all projectiles should leave a trace. If false, only the successful projectiles will leave a trace.
+    /// </summary>
     public bool traceAllProjctiles = false;
-    public bool showDebugSpheres = true;
+
+    /// <summary>
+    /// Determines whether debug spheres should be shown.
+    /// </summary>
+    public bool showDebug = true;
+
+    /// <summary>
+    /// The speed at which the simulation is displayed.
+    /// </summary>
     public float simulationDisplaySpeed = 30f;
+
+    /// <summary>
+    /// The prefab used for creating debug spheres in the scene.
+    /// </summary>
     public GameObject debugSphere;
+
+    /// <summary>
+    /// The key used to initiate the simulation.
+    /// </summary>
     public KeyCode simulationKey = KeyCode.E;
 
     [Header("Projectile Settings")]
+    /// <summary>
+    /// The starting point of the projectile.
+    /// </summary>
     public Transform origin;
+
+    /// <summary>
+    /// The intended target of the projectile.
+    /// </summary>
     public Transform target;
-    public float throwForce = 1f;
-    public float gravity = 9.81f;
-    public float dampening = 0.4f;
-    public int targetBounces = 4;
-    public float targetRadius = 3f;
+
+    /// <summary>
+    /// The properties of the Molly projectile.
+    /// </summary>
+    public MollyProperties molly;
 
     [Header("Performance Settings")]
+    /// <summary>
+    /// The number of solver points to calculate for the simulation.
+    /// </summary>
     public int solverPointsCount = 10000;
+
+    /// <summary>
+    /// The maximum number of steps the simulation will calculate.
+    /// </summary>
     public float maxStepCount = 1000;
-    public float stepSize = 0.01f;
+
+    /// <summary>
+    /// The size of each step in the simulation.
+    /// </summary>
+    public float stepSize = 0.1f;
 
     [Header("Simulation Information")]
+    /// <summary>
+    /// The length of time the projectile's trail will be visible in seconds.
+    /// </summary>
     public float trailLengthInSeconds = 2f;
-    public float simulatedTime;
 
+    /// <summary>
+    /// The total time that has been simulated.
+    /// </summary>
+    public float cumulativeTime;
+
+    /// <summary>
+    /// Used to update values while in play mode.
+    /// </summary>
     public void OnValidate()
     {
         if (solverPointsCount != _solverPointCount)
@@ -42,114 +107,153 @@ public class MollyController : MonoBehaviour
             vectors = GenerateUpperHemispherePoints(_solverPointCount); // Regenerate points whenever editor value changes
         }
     }
+
+    /// <summary>
+    /// Initializes the vectors on start.
+    /// </summary>
     private void Start()
     {
         vectors = GenerateUpperHemispherePoints(_solverPointCount);
     }
 
+    /// <summary>
+    /// Begins the solver if the simulation key is pressed.
+    /// </summary>
     private void Update()
     {
         if (Input.GetKeyDown(simulationKey))
         {
-            BeginSolver();
+            if (debugObjectsFolder != null)
+                Destroy(debugObjectsFolder);
+            debugObjectsFolder = new("DebugObjects");
+            for (int i = 0; i < vectors.Length; i++)
+            {
+                CalculatePath(vectors[i]);
+            }
         }
     }
 
-    private IEnumerator CalculatePath(Vector3 vector, bool trace=false)
+    /// <summary>
+    /// Calculates the projectile path and handles the simulation logic.
+    /// </summary>
+    /// <param name="vector">The initial direction and force of the projectile.</param>
+    /// <param name="trace">Whether to trace the projectile path.</param>
+    /// <returns>An IEnumerator for coroutine management.</returns>
+    private IEnumerator CalculatePathWithTrace(Vector3 vector)
     {
-        Vector3 lastPosition;
+        GameObject lineStrip = new("LineStrip");
+        lineStrip.transform.parent = debugObjectsFolder.transform;
+        LineRenderer lineRenderer = lineStrip.AddComponent<LineRenderer>();
+        lineRenderer.material = new Material(Shader.Find("Legacy Shaders/Particles/Alpha Blended"));
+        lineRenderer.startColor = Color.blue;
+        lineRenderer.endColor = Color.blue;
+        lineRenderer.startWidth = 0.1f;
+        lineRenderer.endWidth = 0.1f;
+        List<Vector3> points = new()
+        {
+            origin.position
+        };
         Vector3 position = origin.position;
-        Vector3 velocity = vector.normalized * throwForce;
+        Vector3 velocity = vector.normalized * molly.throwForce;
         float time = 0;
         int step = 0;
         int bounces = 0;
         while (step++ <= maxStepCount)
         {
-            lastPosition = position;
             position += velocity * stepSize;
-            velocity += gravity * stepSize * Vector3.down;
+            velocity += molly.gravity * stepSize * Vector3.down;
             time += stepSize;
-            simulatedTime += stepSize;
-
-            // TODO: define bound to kill simulations.
-            //if (position.y < 0.1f || position.x < -10 || position.x > 10 || position.z < -10 || position.z > 10)
-            //{
-            //    Debug.Log("Hit bounds at " + time + " seconds");
-            //    if (DEBUG) CreateDebugSphere(position, Color.red);
-            //    break;
-            //}
-
             if (Physics.Raycast(position, velocity, out RaycastHit hit, velocity.magnitude * stepSize, 3))
             {
                 position = hit.point;
-                if (hit.collider.CompareTag("Target"))
+                velocity = Vector3.Reflect(velocity, hit.normal);
+                if (bounces++ == molly.targetBounces)
                 {
-                    Debug.Log("Hit target at " + time + " seconds");
-                    if (showDebugSpheres) CreateDebugSphere(position, Color.green);
-
-                    if (showDebugSpheres && !trace) StartCoroutine(CalculatePath(vector, true));
-                    if (showDebugSpheres && trace)
+                    if (Vector3.Distance(position, target.position) < molly.targetRadius)
                     {
-                        Debug.DrawLine(lastPosition, position, Color.blue, 1000);
+                        CreateDebugSphere(position, Color.green);
                     }
                     break;
-                } else {
-
-                    Debug.Log("Hit wall at " + time + " seconds");
-                    velocity = Vector3.Reflect(velocity, hit.normal);
-                    if (showDebugSpheres && trace) CreateDebugSphere(position, Color.blue);
-                    if (bounces++ == targetBounces)
-                    {
-                        if (Vector3.Distance(position, target.position) < targetRadius)
-                        {
-                            Debug.Log("Hit target at " + time + " seconds");
-                            if (showDebugSpheres) CreateDebugSphere(position, Color.green);
-                        }
-                        break;
-                    };
-                    velocity *= dampening;
-
-                }
+                };
+                velocity *= molly.dampening;
             }
 
-            if (showDebugSpheres && trace)
+            if (showDebug)
             {
-                Debug.DrawLine(lastPosition, position, Color.blue, 500);
+                points.Add(position);
+                lineRenderer.positionCount = points.Count;
+                lineRenderer.SetPositions(points.ToArray());
             }
 
-            if (trace) yield return new WaitForSeconds(1f / simulationDisplaySpeed);
-            else if (step % 100 == 0) yield return null;
+            if ((molly.useFloorIncline && IsFloor(hit.normal)) || velocity.magnitude < molly.terminationVelocity)
+            {
+                break;
+            }
+
+            yield return new WaitForSeconds(1f / simulationDisplaySpeed);
         }
         yield return null;
     }
 
+    private void CalculatePath(Vector3 vector)
+    {
+        Vector3 position = origin.position;
+        Vector3 velocity = vector.normalized * molly.throwForce;
+        float time = 0;
+        int step = 0;
+        int bounces = 0;
+        while (step++ <= maxStepCount)
+        {
+            position += velocity * stepSize;
+            velocity += molly.gravity * stepSize * Vector3.down;
+            time += stepSize;
+            if (Physics.Raycast(position, velocity, out RaycastHit hit, velocity.magnitude * stepSize, 3))
+            {
+                position = hit.point;
+                velocity = Vector3.Reflect(velocity, hit.normal);
+                if (bounces++ == molly.targetBounces)
+                {
+                    if (Vector3.Distance(position, target.position) < molly.targetRadius)
+                    {
+                        LineupCamera.addLineup(origin.position, vector);
+                        if (showDebug) StartCoroutine(CalculatePathWithTrace(vector));
+                    }
+                    break;
+                };
+
+                if (velocity.magnitude < molly.terminationVelocity || (molly.useFloorIncline && IsFloor(hit.normal)))
+                {
+                    if (Vector3.Distance(position, target.position) < molly.targetRadius)
+                    {
+                        LineupCamera.addLineup(origin.position, vector);
+                        if (showDebug) StartCoroutine(CalculatePathWithTrace(vector));
+                    }
+                }
+
+                velocity *= molly.dampening;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Creates a debug sphere at the specified position and color.
+    /// </summary>
+    /// <param name="position">The position to create the sphere at.</param>
+    /// <param name="color">The color of the sphere.</param>
     private void CreateDebugSphere(Vector3 position, Color color)
     {
-        // folder for debug spheres
-        // get from instanced object
         GameObject sphere = Instantiate(debugSphere);
         sphere.transform.position = position;
         sphere.GetComponent<Renderer>().material.color = color;
         sphere.gameObject.layer = 2;
-        sphere.transform.parent = debugObjects.transform;
+        sphere.transform.parent = debugObjectsFolder.transform;
     }
 
-    public void BeginSolver()
-    {
-        if (showDebugSpheres)
-        {
-            if (debugObjects != null)
-                Destroy(debugObjects);
-            debugObjects = new GameObject("DebugObjects");
-            CreateDebugSphere(origin.position, Color.blue);
-            CreateDebugSphere(target.position, Color.green);
-        }
-        for (int i = 0; i < vectors.Length; i++)
-        {
-            StartCoroutine(CalculatePath(vectors[i], traceAllProjctiles));
-        }
-    }
-
+    /// <summary>
+    /// Generates points on the upper hemisphere for projectile simulation.
+    /// </summary>
+    /// <param name="samples">The number of points to generate.</param>
+    /// <returns>An array of Vector3 points.</returns>
     public static Vector3[] GenerateUpperHemispherePoints(int samples)
     {
         List<Vector3> points = new();
@@ -169,8 +273,16 @@ public class MollyController : MonoBehaviour
 
             points.Add(new Vector3(x, y, z));
         }
-
         return points.ToArray();
     }
-}
 
+    /// <summary>
+    /// Checks if the floor incline is within acceptable limits.
+    /// </summary>
+    /// <param name="normal">The normal vector of the floor surface.</param>
+    /// <returns>True if the incline is acceptable, false otherwise.</returns>
+    private bool IsFloor(Vector3 normal)
+    {
+        return Mathf.Abs(Vector3.Angle(Vector3.up, normal)) > molly.floorInclineAngle;
+    }
+}

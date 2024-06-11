@@ -37,10 +37,10 @@ public class MollySwapper : MonoBehaviour
         if (mollyTypeData.ContainsKey(value))
         {
             object[] mollyData = mollyTypeData[value];
-            MollyController.throwForce = (float)mollyData[0];
-            MollyController.gravity = (float)mollyData[1];
-            MollyController.dampening = (float)mollyData[2];
-            MollyController.targetBounces = (int)mollyData[3];
+            MollyController.molly.throwForce = (float)mollyData[0];
+            MollyController.molly.gravity = (float)mollyData[1];
+            MollyController.molly.dampening = (float)mollyData[2];
+            MollyController.molly.targetBounces = (int)mollyData[3];
         }
     }
 }
